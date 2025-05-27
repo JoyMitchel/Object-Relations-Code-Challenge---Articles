@@ -20,3 +20,9 @@ if __name__ == "__main__":
         print(f"Contributors to {tech_today.name}:")
         for author in tech_today.contributors:
             print(f"- {author.name}")
+
+
+    if tech_today:
+        print(f"Articles in {tech_today.name}:")
+        for article in tech_today.articles:
+            print(f"- {article.title} by {article.author.name}")
