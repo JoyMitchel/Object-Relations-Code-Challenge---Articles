@@ -3,58 +3,31 @@ from lib.models.article import Article
 from lib.models.author import Author
 
 class Magazine:
-    def __init__(self, id=None, name=None, category=None):
+    def __init__(self, name, category, id=None):
         self.id = id
-        self.name = name
-        self.category = category
-
-    @property
-    def name(self):
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        if not value or not value.strip():
-            raise ValueError("Magazine name cannot be empty")
-        self._name = value.strip()
-
-    @property
-    def category(self):
-        return self._category
-
-    @category.setter
-    def category(self, value):
-        if not value or not value.strip():
-            raise ValueError("Category cannot be empty")
-        self._category = value.strip()
+        self.name = name.strip()
+        self.category = category.strip()
 
     def save(self):
         conn = get_connection()
         cursor = conn.cursor()
         if self.id is None:
-            cursor.execute(
-                "INSERT INTO magazines (name, category) VALUES (?, ?)",
-                (self.name, self.category)
-            )
+            cursor.execute("INSERT INTO magazines (name, category) VALUES (?, ?)", (self.name, self.category))
             self.id = cursor.lastrowid
         else:
-            cursor.execute(
-                "UPDATE magazines SET name=?, category=? WHERE id=?",
-                (self.name, self.category, self.id)
-            )
+            cursor.execute("UPDATE magazines SET name = ?, category = ? WHERE id = ?", (self.name, self.category, self.id))
         conn.commit()
         conn.close()
-        return self
 
     @classmethod
-    def find_by_id(cls, magazine_id):
+    def find_by_id(cls, id):
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM magazines WHERE id = ?", (magazine_id,))
+        cursor.execute("SELECT * FROM magazines WHERE id = ?", (id,))
         row = cursor.fetchone()
         conn.close()
         if row:
-            return cls(id=row["id"], name=row["name"], category=row["category"])
+            return Magazine(row['name'], row['category'], row['id'])
         return None
 
     @classmethod
@@ -62,9 +35,11 @@ class Magazine:
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM magazines WHERE name = ?", (name,))
-        rows = cursor.fetchall()
+        row = cursor.fetchone()
         conn.close()
-        return [cls(id=row["id"], name=row["name"], category=row["category"]) for row in rows]
+        if row:
+            return Magazine(row['name'], row['category'], row['id'])
+        return None
 
     @classmethod
     def find_by_category(cls, category):
@@ -73,7 +48,7 @@ class Magazine:
         cursor.execute("SELECT * FROM magazines WHERE category = ?", (category,))
         rows = cursor.fetchall()
         conn.close()
-        return [cls(id=row["id"], name=row["name"], category=row["category"]) for row in rows]
+        return [Magazine(row['name'], row['category'], row['id']) for row in rows]
 
     def articles(self):
         conn = get_connection()
@@ -81,7 +56,7 @@ class Magazine:
         cursor.execute("SELECT * FROM articles WHERE magazine_id = ?", (self.id,))
         rows = cursor.fetchall()
         conn.close()
-        return [Article(id=row["id"], title=row["title"], author_id=row["author_id"], magazine_id=row["magazine_id"]) for row in rows]
+        return [Article(row['title'], row['author_id'], row['magazine_id'], row['id']) for row in rows]
 
     def contributors(self):
         conn = get_connection()
@@ -93,7 +68,7 @@ class Magazine:
         """, (self.id,))
         rows = cursor.fetchall()
         conn.close()
-        return [Author(id=row["id"], name=row["name"]) for row in rows]
+        return [Author(row['name'], row['id']) for row in rows]
 
     def article_titles(self):
         conn = get_connection()
@@ -101,34 +76,30 @@ class Magazine:
         cursor.execute("SELECT title FROM articles WHERE magazine_id = ?", (self.id,))
         rows = cursor.fetchall()
         conn.close()
-        return [row["title"] for row in rows]
+        return [row['title'] for row in rows]
 
     def contributing_authors(self):
-        """
-        Authors with more than 2 articles in this magazine
-        """
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT au.*, COUNT(a.id) as article_count FROM authors au
+            SELECT au.*, COUNT(a.id) as article_count
+            FROM authors au
             JOIN articles a ON au.id = a.author_id
             WHERE a.magazine_id = ?
             GROUP BY au.id
-            HAVING article_count > 2
+            HAVING COUNT(a.id) > 2
         """, (self.id,))
         rows = cursor.fetchall()
         conn.close()
-        return [Author(id=row["id"], name=row["name"]) for row in rows]
+        return [Author(row['name'], row['id']) for row in rows]
 
     @classmethod
     def top_publisher(cls):
-        """
-        Bonus: Find the magazine with the most articles
-        """
+        # Magazine with most articles
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT m.*, COUNT(a.id) as article_count
+            SELECT m.*, COUNT(a.id) AS article_count
             FROM magazines m
             JOIN articles a ON m.id = a.magazine_id
             GROUP BY m.id
@@ -138,5 +109,5 @@ class Magazine:
         row = cursor.fetchone()
         conn.close()
         if row:
-            return cls(id=row["id"], name=row["name"], category=row["category"])
+            return Magazine(row['name'], row['category'], row['id'])
         return None

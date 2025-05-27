@@ -34,7 +34,7 @@ IF NOT EXISTS articles
 (id)
 );
 
--- Indexes for performance
+
 CREATE INDEX
 IF NOT EXISTS idx_articles_author_id ON articles
 (author_id);

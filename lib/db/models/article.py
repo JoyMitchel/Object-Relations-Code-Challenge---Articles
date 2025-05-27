@@ -3,21 +3,11 @@ from lib.models.author import Author
 from lib.models.magazine import Magazine
 
 class Article:
-    def __init__(self, id=None, title=None, author_id=None, magazine_id=None):
+    def __init__(self, title, author_id, magazine_id, id=None):
         self.id = id
-        self.title = title
+        self.title = title.strip()
         self.author_id = author_id
         self.magazine_id = magazine_id
-
-    @property
-    def title(self):
-        return self._title
-
-    @title.setter
-    def title(self, value):
-        if not value or not value.strip():
-            raise ValueError("Article title cannot be empty")
-        self._title = value.strip()
 
     def save(self):
         conn = get_connection()
@@ -30,22 +20,21 @@ class Article:
             self.id = cursor.lastrowid
         else:
             cursor.execute(
-                "UPDATE articles SET title=?, author_id=?, magazine_id=? WHERE id=?",
+                "UPDATE articles SET title = ?, author_id = ?, magazine_id = ? WHERE id = ?",
                 (self.title, self.author_id, self.magazine_id, self.id)
             )
         conn.commit()
         conn.close()
-        return self
 
     @classmethod
-    def find_by_id(cls, article_id):
+    def find_by_id(cls, id):
         conn = get_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM articles WHERE id = ?", (article_id,))
+        cursor.execute("SELECT * FROM articles WHERE id = ?", (id,))
         row = cursor.fetchone()
         conn.close()
         if row:
-            return cls(id=row["id"], title=row["title"], author_id=row["author_id"], magazine_id=row["magazine_id"])
+            return Article(row['title'], row['author_id'], row['magazine_id'], row['id'])
         return None
 
     @classmethod
@@ -55,7 +44,7 @@ class Article:
         cursor.execute("SELECT * FROM articles WHERE title = ?", (title,))
         rows = cursor.fetchall()
         conn.close()
-        return [cls(id=row["id"], title=row["title"], author_id=row["author_id"], magazine_id=row["magazine_id"]) for row in rows]
+        return [Article(row['title'], row['author_id'], row['magazine_id'], row['id']) for row in rows]
 
     @classmethod
     def find_by_author(cls, author_id):
@@ -64,7 +53,7 @@ class Article:
         cursor.execute("SELECT * FROM articles WHERE author_id = ?", (author_id,))
         rows = cursor.fetchall()
         conn.close()
-        return [cls(id=row["id"], title=row["title"], author_id=row["author_id"], magazine_id=row["magazine_id"]) for row in rows]
+        return [Article(row['title'], row['author_id'], row['magazine_id'], row['id']) for row in rows]
 
     @classmethod
     def find_by_magazine(cls, magazine_id):
@@ -73,7 +62,7 @@ class Article:
         cursor.execute("SELECT * FROM articles WHERE magazine_id = ?", (magazine_id,))
         rows = cursor.fetchall()
         conn.close()
-        return [cls(id=row["id"], title=row["title"], author_id=row["author_id"], magazine_id=row["magazine_id"]) for row in rows]
+        return [Article(row['title'], row['author_id'], row['magazine_id'], row['id']) for row in rows]
 
     def author(self):
         return Author.find_by_id(self.author_id)
