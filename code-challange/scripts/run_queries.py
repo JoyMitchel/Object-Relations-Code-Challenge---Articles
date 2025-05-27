@@ -15,3 +15,8 @@ if __name__ == "__main__":
         for mag in alice.magazines:
             print(f"- {mag.name} ({mag.category})")
        
+        tech_today = Magazine.find_by_name("Tech Today")
+    if tech_today:
+        print(f"Contributors to {tech_today.name}:")
+        for author in tech_today.contributors:
+            print(f"- {author.name}")
