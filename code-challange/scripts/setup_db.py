@@ -8,3 +8,8 @@ conn = get_connection()
 conn.executescript(schema_sql)
 conn.commit()
 conn.close()
+
+if __name__ == "__main__":
+    from lib.db.seed import seed
+    seed()
+    print("Database setup and seeded.")
