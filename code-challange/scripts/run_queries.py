@@ -9,3 +9,9 @@ if __name__ == "__main__":
         print(f"Articles by {alice.name}:")
         for article in alice.articles:
             print(f"- {article.title}")
+
+       if alice:
+        print(f"Magazines {alice.name} contributed to:")
+        for mag in alice.magazines:
+            print(f"- {mag.name} ({mag.category})")
+       
